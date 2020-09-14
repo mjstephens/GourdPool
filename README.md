@@ -23,6 +23,11 @@ GourdPool automatically creates, manages, and references pools for every object 
 It's that easy! If there are no instances available, a new one will be instantiated, but if there are available instances in the pool, they will be reused. *This one method is used for all pooled object spawning.*
 
 ----
+![](Demo/gourdPoolDemoGif.gif) 
+
+The yellow cubes are instantiated, allocating memory for each instance. The blue cubes are identical prefabs (with a color change at runtime) - but, the blue cubes are _reused instances of previously spawned objects_. Spawning is identical; the same call to _GourdPool.Pooled_.
+
+----
 
 **Returning Objects to Pools**
 
