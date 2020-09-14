@@ -11,7 +11,7 @@ namespace GourdPool
         #region Variables
 
         /// <summary>
-        /// 
+        /// A list of all of the gameObject pools we currently have.
         /// </summary>
         private static readonly List<GameObjectPool> _pools = new List<GameObjectPool>();
 
@@ -81,7 +81,7 @@ namespace GourdPool
         /// <summary>
         /// Finds and returns the pool for the given object; if none exists, a pool is created
         /// </summary>
-        private static GameObjectPool GetPoolForObject(GameObject go)
+        public static GameObjectPool GetPoolForObject(GameObject go, bool createIfNotFound = true)
         {
             // Find the pool for the associated gameObject
             GameObjectPool targetPool = null;
@@ -95,7 +95,7 @@ namespace GourdPool
             }
     
             // If the target is null, there doesn't exist a pool for this GameObject yet
-            if (targetPool == null)
+            if (targetPool == null && createIfNotFound)
             {
                 targetPool = new GameObjectPool
                 {
@@ -106,6 +106,16 @@ namespace GourdPool
             }
 
             return targetPool;
+        }
+
+        public static void DeleteGameObjectPool(GameObject go)
+        {
+            GameObjectPool p = GetPoolForObject(go, false);
+            if (p != null)
+            {
+                ((IPool) p).Clear();
+                _pools.Remove(p);
+            }
         }
 
         #endregion Pooling

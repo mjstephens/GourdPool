@@ -22,6 +22,10 @@ namespace GourdPool
         
         public int activeCount => GetPoolActiveCount();
         
+        public int recyclesCount { get; private set; }
+
+        public int pooledUseCount => recyclesCount + _availableUsedCount;
+
         public string poolLabel { get; set; }
 
         #endregion Properties
@@ -37,6 +41,9 @@ namespace GourdPool
         // Backing fields for properties
         private int _capacityMin;
         private int _capacityMax = -1;
+        
+        //
+        private int _availableUsedCount;
 
         #endregion Fields
 
@@ -75,6 +82,7 @@ namespace GourdPool
                 }
                 else
                 {
+                    _availableUsedCount++;
                     ClaimInstance(result);
                 }
             }
@@ -129,6 +137,8 @@ namespace GourdPool
             _pool.RemoveAt(0);
             _pool.Add(p);
             p.Recycle();
+
+            recyclesCount++;
             return p;
         }
 
@@ -230,7 +240,7 @@ namespace GourdPool
         }
 
         #endregion Capacity
-
+        
 
         #region Utility
 
@@ -257,6 +267,16 @@ namespace GourdPool
                 _pool[0].DeleteFromPool();
                 _pool.RemoveAt(0);
                 cleaned++;
+            }
+        }
+        
+        void IPool.Clear()
+        {
+            for (int i = _pool.Count - 1; i >= 0; i--)
+            {
+                IClientPoolable p = _pool[i];
+                p.DeleteFromPool();
+                _pool.Remove(p);
             }
         }
 

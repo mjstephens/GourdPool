@@ -20,6 +20,7 @@ namespace GourdPool
         private GameObject _go;
         private IPool _pool;
         private bool _deactivateCacheFlag;
+        private bool _destroyCacheFlag;
         private bool _activateCacheFlag;
         private bool _anonymousFlag;
         
@@ -71,13 +72,9 @@ namespace GourdPool
 
         private void OnDestroy()
         {
-            if (!_deactivateCacheFlag)
+            if (!_destroyCacheFlag)
             {
                 _pool.DeleteFromInstance(this);
-            }
-            else
-            {
-                _deactivateCacheFlag = false;
             }
         }
 
@@ -122,7 +119,7 @@ namespace GourdPool
 
         void IClientPoolable.DeleteFromPool()
         {
-            _deactivateCacheFlag = true;
+            _destroyCacheFlag = true;
             Destroy(_go);
         }
 

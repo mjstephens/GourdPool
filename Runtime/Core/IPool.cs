@@ -27,6 +27,16 @@ namespace GourdPool
         int activeCount { get; }
         
         /// <summary>
+        /// The number of times instances in the pool have been recycled for reuse.
+        /// </summary>
+        int recyclesCount { get; }
+        
+        /// <summary>
+        /// The number of times instances have been used from the pool - either available, or recycled
+        /// </summary>
+        int pooledUseCount { get; }
+        
+        /// <summary>
         /// The label for this pool; used for debugging.
         /// </summary>
         string poolLabel { get; set; }
@@ -61,6 +71,11 @@ namespace GourdPool
         /// Destroys any available instances remaining in the pool.
         /// </summary>
         void Clean();
+
+        /// <summary>
+        /// Clears all instance from the pool and resets to empty state.
+        /// </summary>
+        void Clear();
 
         #endregion
     }
