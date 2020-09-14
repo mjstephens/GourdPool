@@ -12,7 +12,7 @@ This repository contains the UPM package only. The Unity demo project with examp
 
 ### Prerequisites
 
-* Unity 2019.4 or later.
+* Unity 2019.4 or later (_Note this has not been tested with earlier versions of Unity, but should work no problem_)
 
 ## Usage
 
