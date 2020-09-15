@@ -14,7 +14,33 @@ This repository contains the UPM package only. The Unity demo project with examp
 
 * Unity 2019.4 or later (_Note this has not been tested with earlier versions of Unity, but should work no problem_)
 
-## Usage
+## Quick Start
+
+- Import the package through the Package Manager window (+ -> Add package from git URL...)
+- Paste in the link to this repository: https://github.com/mjstephens/GourdPool.git
+
+----
+
+- To instantiate an object and also create/use a pool for that object:
+  >GameObject myObj = GourdPool.Pooled(prefabReference);
+- When finished with a pooled object, call _SetActive(false)_ to disable it and return it to its pool
+- To define pool maximum/minimum instance values (see below for usage examples):
+  >GourdPool.SetObjectPoolCapacity(yourObj, minimum, maximum);
+- To store an instance of a pool:
+  >IPool myPool = GourdPool.GetPoolForObject(yourObj);
+- To clear inactive instances from a pool:
+  >myPool.Clear();
+- To retrieve various data from a pool:
+  >myPool.instanceCount
+  
+  >myPool.activeCount
+  
+  >myPool.recyclesCount
+  
+  >myPool.pooledUseCount
+
+
+## Details
 
 ### Creating Pools
 
