@@ -21,12 +21,12 @@ This repository contains the UPM package only. The Unity demo project with examp
 - Import the package through the Package Manager window (+ -> Add package from git URL...)
 - Paste in the link to this repository: https://github.com/mjstephens/GourdPool.git
 - To instantiate an object and also create/use a pool for that object:
-  >GameObject myObj = GourdPool.Pooled(prefabReference);
+  >GameObject myObj = Pool.Pooled(prefabReference);
 - When finished with a pooled object, call _SetActive(false)_ to disable it and return it to its pool
 - To define pool maximum/minimum instance values (see below for usage examples):
-  >GourdPool.SetObjectPoolCapacity(yourObj, minimum, maximum);
+  >Pool.SetObjectPoolCapacity(yourObj, minimum, maximum);
 - To store an instance of a pool:
-  >IPool myPool = GourdPool.GetPoolForObject(yourObj);
+  >IPool myPool = Pool.GetPoolForObject(yourObj);
 - To clear inactive instances from a pool:
   >myPool.Clear();
 - To retrieve various data from a pool:
@@ -54,14 +54,14 @@ This will instantiate a new instance of the prefab, allocating the required memo
 
 GourdPool automatically creates, manages, and references pools for every object you need. If a pool does not yet exist for your object, a new one will be automatically created. Simply replace the above instantiation logic with the following:
 
->GameObject myObj = GourdPool.Pooled(prefabReference);
+>GameObject myObj = Pool.Pooled(prefabReference);
 
 It's that easy! If there are no instances available, a new one will be instantiated, but if there are available instances in the pool, they will be reused. *This one method is used for all pooled object spawning.*
 
 ----
 ![](Demo/gourdPoolDemoGif.gif) 
 
-Yellow indicates an object is freshly instantiated, allocating memory for each instance. The blue cubes are identical prefabs (with a color change at runtime) - but, the blue color indicates the objects are _reused instances of previously spawned objects_. The spawning logic is an identical call to _GourdPool.Pooled_, but GourdPool recognizes when there are available instances in a pool and prioritizes their reuse over instantiating new objects. No extra logic necessary.
+Yellow indicates an object is freshly instantiated, allocating memory for each instance. The blue cubes are identical prefabs (with a color change at runtime) - but, the blue color indicates the objects are _reused instances of previously spawned objects_. The spawning logic is an identical call to _Pool.Pooled_, but GourdPool recognizes when there are available instances in a pool and prioritizes their reuse over instantiating new objects. No extra logic necessary.
 
 ----
 
@@ -90,3 +90,7 @@ MINIMUM CAPACITY
 You can also define a minimum capacity for a pool; this has the effect of _prewarming_ a pool with a set number of instances for later use. If you know you will need a certain number of an object sometime in the future, you can use a pool's minimum capacity to offset the instantiation cost of those objects to whenever you'd like.
 
 When a pool's minimum capacity is set, the pool will immediately instantiate as many instances as needed to reach the minimum capacity value.
+
+SPILLOVER
+
+You may optionally define a _spillover allowance_ for a pool - this will allow a pool to temporarily exceed its maximum instance count by the given amount. When a spillover instance is relinquished, it is destroyed rather than being returned to the pool. This is useful for situations where you need a temporary burst of pooled instances, the amount of which would otherwise exceed your pool's maximum instance limit. If your pool is configured with no maximum, spillover allowance will be ignored.
