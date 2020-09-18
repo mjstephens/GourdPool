@@ -67,11 +67,11 @@ Yellow indicates an object is freshly instantiated, allocating memory for each i
 
 ### Returning Objects to Pools
 
-It's important to remember that when you're dealing with pooled objects, you should _disable_ rather than _destroy_ them. GourdPool automatically hooks into the OnDisable() callback of pooled objects, so you don't need to worry about manually managing the pool references. Just call:
+It's important to remember that when you're dealing with pooled objects, you should _disable_ rather than _destroy_ them. GourdPool automatically creates and adds a component that hooks into the OnDisable() callback of pooled objects, so you don't need to worry about manually managing the pool references. Just call:
 
 >myObj.SetActive(false);
 
-and it will automatically be relinquished to the pool for future reuse.
+from wherever you need to, and it will automatically be relinquished to the pool for future reuse.
 
 ----
 
