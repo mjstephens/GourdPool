@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using Data;
 
 namespace GourdPool
 {
@@ -18,14 +20,21 @@ namespace GourdPool
             set => SetCapacityMax(value);
         }
 
+        public int spilloverAllowance { get; set; }
+
         public int instanceCount => _pool.Count;
         
         public int activeCount => GetPoolActiveCount();
         
         public int recyclesCount { get; private set; }
 
-        public int pooledUseCount => recyclesCount + _availableUsedCount;
+        public int activeSpilloverCount => 
+            _capacityMax > 0 
+            ? Math.Max(0, _pool.Count - _capacityMax) 
+            : 0;
 
+        public int pooledUseCount => recyclesCount + _availableUsedCount;
+        
         public string poolLabel { get; set; }
 
         #endregion Properties
@@ -36,24 +45,33 @@ namespace GourdPool
         /// <summary>
         /// The pool of instances, ordered from oldest (0) to newest (count - 1)
         /// </summary>
-        private readonly List<IClientPoolable> _pool;
+        private readonly List<IClientPoolable> _pool = new List<IClientPoolable>();
 
         // Backing fields for properties
         private int _capacityMin;
         private int _capacityMax = -1;
         
-        //
+        /// <summary>
+        /// Counts the number of times pooled instances (already instantiated) are used
+        /// </summary>
         private int _availableUsedCount;
 
         #endregion Fields
 
 
         #region Constructor
-        
-        protected PoolBase()
+
+        /// <summary>
+        /// Creates a pool with optional preconfigured data.
+        /// </summary>
+        protected PoolBase(PoolConfigData configData = null)
         {
-            // Set default capacity (no prewarmed, infinite max)
-            _pool = new List<IClientPoolable>();
+            if (configData != null)
+            {
+                capacityMin = configData.minimumCapacity;
+                capacityMax = configData.maximumCapacity;
+                poolLabel = configData.label;
+            }
         }
 
         #endregion Constructor
@@ -70,10 +88,18 @@ namespace GourdPool
                 result = GetNextAvailable();
                 if (result == null)
                 {
-                    // We are either full or at max capacity. Create or recycle
+                    // We are either full or at max capacity. Create or recycle/spillover
                     if (_capacityMax > 0 && _pool.Count >= _capacityMax)
                     {
-                        result = Recycle();
+                        if (spilloverAllowance == -1 || 
+                            (spilloverAllowance > 0 && _pool.Count < _capacityMax + spilloverAllowance))
+                        {
+                            result = Spillover();
+                        }
+                        else
+                        {
+                            result = Recycle();
+                        }
                     }
                     else
                     {
@@ -83,7 +109,7 @@ namespace GourdPool
                 else
                 {
                     _availableUsedCount++;
-                    ClaimInstance(result);
+                    ClaimInstance(result, false);
                 }
             }
             else
@@ -95,7 +121,7 @@ namespace GourdPool
         }
 
         /// <summary>
-        /// Returns the next available instance of a pooled object.
+        /// 
         /// </summary>
         /// <returns></returns>
         private IClientPoolable GetNextAvailable()
@@ -104,8 +130,9 @@ namespace GourdPool
         }
 
         /// <summary>
-        /// Creates a new instance of the pooled object.
+        /// 
         /// </summary>
+        /// <returns></returns>
         private IClientPoolable CreateNew(bool activateAfterCreation)
         {
             IClientPoolable result = CreateNewPoolable();
@@ -114,7 +141,7 @@ namespace GourdPool
             // Claim (if using) or relinquish (if prewarming)
             if (activateAfterCreation)
             {
-                ClaimInstance(result);
+                ClaimInstance(result, true);
             }
             else
             {
@@ -125,9 +152,14 @@ namespace GourdPool
         }
         
         protected abstract IClientPoolable CreateNewPoolable();
+        
+        #endregion Get Next
+
+
+        #region Overflow
 
         /// <summary>
-        /// Recycles and reclaims the oldest instance of the pooled objects.
+        /// Recycles and claims the oldest instance of the pooled objects.
         /// </summary>
         /// <returns></returns>
         private IClientPoolable Recycle()
@@ -137,19 +169,33 @@ namespace GourdPool
             _pool.RemoveAt(0);
             _pool.Add(p);
             p.Recycle();
-
+            
             recyclesCount++;
             return p;
         }
+        
+        /// <summary>
+        /// Creates a new instance, but marks it for deletion.
+        /// </summary>
+        /// <returns></returns>
+        private IClientPoolable Spillover()
+        {
+            IClientPoolable p = CreateNew(true);
+            return p;
+        }
 
-        #endregion Get Next
+        #endregion Overflow
 
 
         #region Ownership
 
-        public void ClaimInstance(IClientPoolable instance)
+        public void ClaimInstance(IClientPoolable instance, bool isNewInstance)
         {
-            _pool.Remove(instance);
+            if (!isNewInstance)
+            {
+                _pool.Remove(instance);
+            }
+
             _pool.Add(instance);
             instance.availableInPool = false;
             instance.Claim();
@@ -157,10 +203,20 @@ namespace GourdPool
 
         public void RelinquishInstance(IClientPoolable instance)
         {
-            _pool.Remove(instance);
-            _pool.Insert(0, instance);
-            instance.availableInPool = true;
-            instance.Relinquish();
+            // If we are in spillover, the instance should be deleted
+            if (_capacityMax > 0 && _pool.Count > _capacityMax)
+            {
+                instance.DeleteFromPool();
+                _pool.Remove(instance);
+            }
+            // Otherwise relenquish as normal
+            else
+            {
+                _pool.Remove(instance);
+                _pool.Insert(0, instance);
+                instance.availableInPool = true;
+                instance.Relinquish();
+            }
         }
         
         void IPool.DeleteFromInstance(IClientPoolable instance)
@@ -174,12 +230,14 @@ namespace GourdPool
         #region Capactiy
 
         /// <summary>
-        /// Sets and enforces a minimum capacity for this pool.
+        /// 
         /// </summary>
-        /// <param name="minValue">The minimum number of objects in this pool. If the object count is
-        /// less than this number, new objects will be created to reach the minimum.</param>
+        /// <param name="minValue"></param>
         private void SetCapacityMin(int minValue)
         {
+            if (minValue == _capacityMin)
+                return;
+            
             _capacityMin = minValue;
             if (!PoolValidationUtility.ValidatePoolCapacity(_capacityMin, _capacityMax))
                 return;
@@ -189,12 +247,14 @@ namespace GourdPool
         }
 
         /// <summary>
-        /// Sets and enforces a maximum object count for this pool.
+        /// 
         /// </summary>
-        /// <param name="maxValue">The maximum number of objects allowed in this pool. If the object count is
-        /// greater than this number, objects will be destroyed to reach the max value.</param>
+        /// <param name="maxValue"></param>
         private void SetCapacityMax(int maxValue)
         {
+            if (maxValue == _capacityMax)
+                return;
+            
             _capacityMax = maxValue;
             if (!PoolValidationUtility.ValidatePoolCapacity(_capacityMin, _capacityMax))
                 return;
@@ -240,7 +300,7 @@ namespace GourdPool
         }
 
         #endregion Capacity
-        
+
 
         #region Utility
 
@@ -281,7 +341,7 @@ namespace GourdPool
         }
 
         /// <summary>
-        /// Returns the number of active instances in the pool.
+        /// 
         /// </summary>
         /// <returns></returns>
         private int GetPoolActiveCount()
@@ -301,7 +361,34 @@ namespace GourdPool
 
             return a;
         }
-        
+
+        public bool InternalValidatePoolInstanceLayout(int targetAvailable)
+        {
+            bool pass = true;
+            bool hasFoundActive = false;
+            int availableCount = 0;
+            for (int i = 0; i < _pool.Count; i++)
+            {
+                if (!_pool[i].availableInPool)
+                {
+                    hasFoundActive = true;
+                }
+                else
+                {
+                    if (hasFoundActive)
+                    {
+                        pass = false;
+                        break;
+                    }
+                    availableCount++;
+                }
+            }
+
+            if (pass)
+                pass = availableCount == targetAvailable;
+            return pass;
+        }
+
         #endregion Utility
     }
 }

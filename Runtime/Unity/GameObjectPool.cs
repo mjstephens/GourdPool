@@ -11,7 +11,7 @@ namespace GourdPool
         
         protected override IClientPoolable CreateNewPoolable()
         {
-            GameObject newObj = GourdPool.Instantiate(pooledGameObject);
+            GameObject newObj = Pool.Instantiate(pooledGameObject);
             return newObj.AddComponent<GameObjectPooledComponent>();
         }
     }
