@@ -79,7 +79,7 @@ namespace GourdPool
 
 
         #region Public Utility
-
+        
         public static void SetObjectPoolCapacity(
             GameObject go,
             int capacityMin, 
@@ -89,7 +89,23 @@ namespace GourdPool
             targetPool.capacityMin = capacityMin;
             targetPool.capacityMax = capacityMax;
         }
-
+        
+        public static void SetObjectPoolCapacityMin(
+            GameObject go,
+            int capacityMin)
+        {
+            GameObjectPool targetPool = GetPoolForObject(go);
+            targetPool.capacityMin = capacityMin;
+        }
+        
+        public static void SetObjectPoolCapacityMax(
+            GameObject go,
+            int capacityMax)
+        {
+            GameObjectPool targetPool = GetPoolForObject(go);
+            targetPool.capacityMax = capacityMax;
+        }
+        
         public static void SetObjectPoolSpilloverAllowance(
             GameObject go,
             int spilloverAllowance)
