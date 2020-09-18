@@ -70,6 +70,7 @@ namespace GourdPool
             {
                 capacityMin = configData.minimumCapacity;
                 capacityMax = configData.maximumCapacity;
+                spilloverAllowance = configData.spilloverAllowance;
                 poolLabel = configData.label;
             }
         }
@@ -360,33 +361,6 @@ namespace GourdPool
             }
 
             return a;
-        }
-
-        public bool InternalValidatePoolInstanceLayout(int targetAvailable)
-        {
-            bool pass = true;
-            bool hasFoundActive = false;
-            int availableCount = 0;
-            for (int i = 0; i < _pool.Count; i++)
-            {
-                if (!_pool[i].availableInPool)
-                {
-                    hasFoundActive = true;
-                }
-                else
-                {
-                    if (hasFoundActive)
-                    {
-                        pass = false;
-                        break;
-                    }
-                    availableCount++;
-                }
-            }
-
-            if (pass)
-                pass = availableCount == targetAvailable;
-            return pass;
         }
 
         #endregion Utility
