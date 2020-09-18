@@ -81,16 +81,16 @@ By default, pools are configured to expand infinitely. That is, they have no upp
 
 MAX CAPACITY
 
-Sometimes you may wish to define a maximum capacity for a pool. This limits the number of possible concurrent instantiated instances. If you request a new pooled instance, and the max capacity has been reached (AND all of the instances are in use) the pool will automtically _recycle_ the OLDEST (i.e. longest in use) instance. Of course, if that instance is clearly visible and/or being used for important purposes, recycling it will result in potentially incorrect behavior.
+Sometimes you may wish to define a maximum capacity for a pool. This limits the number of possible concurrent instantiated instances. If you request a new pooled instance, and the max capacity has been reached (AND all of the instances are in use) the pool will automatically _recycle_ the OLDEST (i.e. longest in use) instance. Of course, if that instance is clearly visible and/or being used for important purposes, recycling it will result in potentially incorrect behavior.
 
-When a pool's max capacity is set, the pool will immediately destroy any excess instances. To configure a pool with unlimited capacity, simply set the max capacity value to -1.
+When a pool's max capacity is set, the pool will immediately destroy any excess instances. To configure a pool with unlimited capacity, simply set the max capacity value to -1. A pool's max capacity is set to -1 by default.
 
 MINIMUM CAPACITY
 
 You can also define a minimum capacity for a pool; this has the effect of _prewarming_ a pool with a set number of instances for later use. If you know you will need a certain number of an object sometime in the future, you can use a pool's minimum capacity to offset the instantiation cost of those objects to whenever you'd like.
 
-When a pool's minimum capacity is set, the pool will immediately instantiate as many instances as needed to reach the minimum capacity value.
+When a pool's minimum capacity is set, the pool will immediately instantiate as many instances as needed to reach the minimum capacity value. A pool's min capacity is set to 0 by default.
 
 SPILLOVER
 
-You may optionally define a _spillover allowance_ for a pool - this will allow a pool to temporarily exceed its maximum instance count by the given amount. When a spillover instance is relinquished, it is destroyed rather than being returned to the pool. This is useful for situations where you need a temporary burst of pooled instances, the amount of which would otherwise exceed your pool's maximum instance limit. If your pool is configured with no maximum, spillover allowance will be ignored.
+You may optionally define a _spillover allowance_ for a pool - this will allow a pool to temporarily exceed its maximum instance count by the given amount. When a spillover instance is relinquished, it is destroyed rather than being returned to the pool. This is useful for situations where you need a temporary burst of pooled instances, the amount of which would otherwise exceed your pool's maximum instance limit. If your pool is configured with no maximum, spillover allowance will be ignored. A pool's spillover allowance is set to 0 by default.
