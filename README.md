@@ -37,6 +37,8 @@ This repository contains the UPM package only. The Unity demo project with examp
   >myPool.recyclesCount
   
   >myPool.pooledUseCount
+  
+  >myPool.activeSpilloverCount
 
 
 ## Details
